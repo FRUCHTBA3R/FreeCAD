@@ -66,7 +66,11 @@ class Facebinder(DraftObject):
         faces = []
         area = 0
         for sel in obj.Faces:
-            for f in sel[1]:
+            selected_faces = sel[1]
+            # if no face is selected, use all faces
+            if len(selected_faces) == 1 and selected_faces[0] == "":
+                selected_faces = [f"Face{i}" for i in range(len(sel[0].Shape.Faces))]
+            for f in selected_faces:
                 if "Face" in f:
                     try:
                         fnum = int(f[4:])-1
