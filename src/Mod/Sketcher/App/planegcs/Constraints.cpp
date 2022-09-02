@@ -187,10 +187,13 @@ void ConstraintP2PDistance::rescale(double coef)
 
 double ConstraintP2PDistance::error()
 {
-    double dx = (*p1x() - *p2x());
-    double dy = (*p1y() - *p2y());
+    double dx = (*p2x() - *p1x());
+    double dy = (*p2y() - *p1y());
     double d = sqrt(dx*dx + dy*dy);
-    double dist  = *distance();
+    // directional sign
+    //if ((dx < 0.0) || (dx == 0.0 && dy < 0.0))
+    //    d = -d;
+    double dist = *distance();
     return scale * (d - dist);
 }
 
@@ -199,13 +202,16 @@ double ConstraintP2PDistance::grad(double *param)
     double deriv=0.;
     if (param == p1x() || param == p1y() ||
         param == p2x() || param == p2y()) {
-        double dx = (*p1x() - *p2x());
-        double dy = (*p1y() - *p2y());
+        double dx = (*p2x() - *p1x());
+        double dy = (*p2y() - *p1y());
         double d = sqrt(dx*dx + dy*dy);
-        if (param == p1x()) deriv += dx/d;
-        if (param == p1y()) deriv += dy/d;
-        if (param == p2x()) deriv += -dx/d;
-        if (param == p2y()) deriv += -dy/d;
+        // directional sign
+        //if ((dx < 0.0) || (dx == 0.0 && dy < 0.0))
+        //    d = -d;
+        if (param == p1x()) deriv += -dx/d;
+        if (param == p1y()) deriv += -dy/d;
+        if (param == p2x()) deriv += dx/d;
+        if (param == p2y()) deriv += dy/d;
     }
     if (param == distance()) deriv += -1.;
 
@@ -219,7 +225,7 @@ double ConstraintP2PDistance::maxStep(MAP_pD_D &dir, double lim)
     it = dir.find(distance());
     if (it != dir.end()) {
         if (it->second < 0.)
-            lim = std::min(lim, -(*distance()) / it->second);
+            lim = std::min(lim, -std::abs(*distance()) / it->second); // use abs dist
     }
     // restrict actual distance change
     double ddx=0.,ddy=0.;
@@ -232,7 +238,7 @@ double ConstraintP2PDistance::maxStep(MAP_pD_D &dir, double lim)
     it = dir.find(p2y());
     if (it != dir.end()) ddy -= it->second;
     double dd = sqrt(ddx*ddx+ddy*ddy);
-    double dist  = *distance();
+    double dist = std::abs(*distance());
     if (dd > dist) {
         double dx = (*p1x() - *p2x());
         double dy = (*p1y() - *p2y());
@@ -347,8 +353,10 @@ double ConstraintP2LDistance::error()
     double dx = x2-x1;
     double dy = y2-y1;
     double d = sqrt(dx*dx+dy*dy);
-    double area = std::abs(-x0*dy+y0*dx+x1*y2-x2*y1); // = x1y2 - x2y1 - x0y2 + x2y0 + x0y1 - x1y0 = 2*(triangle area)
-    return scale * (area/d - dist);
+    //double area = std::abs(-x0*dy+y0*dx+x1*y2-x2*y1); // = x1y2 - x2y1 - x0y2 + x2y0 + x0y1 - x1y0 = 2*(triangle area)
+    // signed distance
+    double lambda = -dy * (x0 - x1) + dx * (y0 - y1);
+    return scale * (lambda / d - dist);
 }
 
 double ConstraintP2LDistance::grad(double *param)
@@ -373,8 +381,8 @@ double ConstraintP2LDistance::grad(double *param)
         if (param == p1y()) deriv += ((x0-x2)*d + (dy/d)*area) / d2;
         if (param == p2x()) deriv += ((y0-y1)*d - (dx/d)*area) / d2;
         if (param == p2y()) deriv += ((x1-x0)*d - (dy/d)*area) / d2;
-        if (area < 0)
-            deriv *= -1;
+        //if (area < 0)
+        //    deriv *= -1;
     }
     if (param == distance()) deriv += -1;
 
@@ -388,7 +396,7 @@ double ConstraintP2LDistance::maxStep(MAP_pD_D &dir, double lim)
     it = dir.find(distance());
     if (it != dir.end()) {
         if (it->second < 0.)
-            lim = std::min(lim, -(*distance()) / it->second);
+            lim = std::min(lim, -std::abs(*distance()) / it->second);
     }
     // restrict actual area change
     double darea=0.;
@@ -411,7 +419,7 @@ double ConstraintP2LDistance::maxStep(MAP_pD_D &dir, double lim)
     if (darea > 0.) {
         double dx = x2-x1;
         double dy = y2-y1;
-        double area = 0.3*(*distance())*sqrt(dx*dx+dy*dy);
+        double area = 0.3*std::abs(*distance())*sqrt(dx*dx+dy*dy);
         if (darea > area) {
             area = std::max(area, 0.3*std::abs(-x0*dy+y0*dx+x1*y2-x2*y1));
             if (darea > area)
@@ -740,12 +748,16 @@ double ConstraintL2LAngle::error()
     double dy1 = (*l1p2y() - *l1p1y());
     double dx2 = (*l2p2x() - *l2p1x());
     double dy2 = (*l2p2y() - *l2p1y());
-    double a = atan2(dy1,dx1) + *angle();
-    double ca = cos(a);
-    double sa = sin(a);
-    double x2 = dx2*ca + dy2*sa;
-    double y2 = -dx2*sa + dy2*ca;
-    return scale * atan2(y2,x2);
+    //double a = atan2(dy1,dx1) + *angle();
+    //double ca = cos(a);
+    //double sa = sin(a);
+    //double x2 = dx2*ca + dy2*sa;
+    //double y2 = -dx2*sa + dy2*ca;
+    double a2 = atan2(dy2, dx2);
+    double a = *angle() + atan2(dy1, dx1);
+    //a -= floor((a + M_PI) / (2 * M_PI)) * (2 * M_PI);
+    a = remainder(a, 2 * M_PI);
+    return scale * (a2 - a);//atan2(y2,x2);
 }
 
 double ConstraintL2LAngle::grad(double *param)
@@ -763,7 +775,7 @@ double ConstraintL2LAngle::grad(double *param)
     }
     if (param == l2p1x() || param == l2p1y() ||
         param == l2p2x() || param == l2p2y()) {
-        double dx1 = (*l1p2x() - *l1p1x());
+        /*double dx1 = (*l1p2x() - *l1p1x());
         double dy1 = (*l1p2y() - *l1p1y());
         double dx2 = (*l2p2x() - *l2p1x());
         double dy2 = (*l2p2y() - *l2p1y());
@@ -778,7 +790,14 @@ double ConstraintL2LAngle::grad(double *param)
         if (param == l2p1x()) deriv += (-ca*dx2 + sa*dy2);
         if (param == l2p1y()) deriv += (-sa*dx2 - ca*dy2);
         if (param == l2p2x()) deriv += ( ca*dx2 - sa*dy2);
-        if (param == l2p2y()) deriv += ( sa*dx2 + ca*dy2);
+        if (param == l2p2y()) deriv += ( sa*dx2 + ca*dy2);*/
+        double dx2 = (*l2p2x() - *l2p1x());
+        double dy2 = (*l2p2y() - *l2p1y());
+        double r2 = dx2 * dx2 + dy2 * dy2;
+        if (param == l2p1x()) deriv += dy2 / r2;
+        if (param == l2p1y()) deriv += -dx2 / r2;
+        if (param == l2p2x()) deriv += -dy2 / r2;
+        if (param == l2p2y()) deriv += dx2 / r2;
     }
     if (param == angle()) deriv += -1;
 

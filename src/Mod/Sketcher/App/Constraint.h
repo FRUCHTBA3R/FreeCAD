@@ -157,6 +157,7 @@ public:
     PointPos SecondPos;
     int Third;
     PointPos ThirdPos;
+    int Handedness;
     float LabelDistance;
     float LabelPosition;
     bool isDriving;

@@ -2184,7 +2184,7 @@ void CmdSketcherConstrainDistance::activated(int iMsg)
             openCommand(QT_TRANSLATE_NOOP("Command", "Add point to point distance constraint"));
             Gui::cmdAppObjectArgs(selection[0].getObject(),
                 "addConstraint(Sketcher.Constraint('Distance',%d,%d,%d,%d,%f)) ",
-                GeoId1,static_cast<int>(PosId1),GeoId2,static_cast<int>(PosId2),(pnt2-pnt1).Length());
+                GeoId1,static_cast<int>(PosId1),GeoId2,static_cast<int>(PosId2),(pnt2-pnt1).Length()); // DirectonalLength
         }
 
         if (arebothpointsorsegmentsfixed || constraintCreationMode==Reference) {
@@ -2214,7 +2214,12 @@ void CmdSketcherConstrainDistance::activated(int iMsg)
             Base::Vector3d pnt1 = lineSeg->getStartPoint();
             Base::Vector3d pnt2 = lineSeg->getEndPoint();
             Base::Vector3d d = pnt2-pnt1;
-            double ActDist = std::abs(-pnt.x*d.y+pnt.y*d.x+pnt1.x*pnt2.y-pnt2.x*pnt1.y) / d.Length();
+            // p = pnt-pnt1
+            // n=normalize(vec2(-d.y, d.x))=vec2(-d.y,d.x)/d.Length()
+            // distance="abs"(dot(p,n))="abs"(-d.y*(pnt.x-pnt1.x)+d.x*(pnt.y-pnt1.y)) [="abs"(-pnt.x*d.y+d.x*pnt.y + (pnt2.y-pnt1.y)*pnt1.x - (pnt2.x-pnt1.x)*pnt1.y)]
+            // double ActDist = std::abs(-pnt.x*d.y+pnt.y*d.x+pnt1.x*pnt2.y-pnt2.x*pnt1.y) / d.Length();
+            // signed distance without abs
+            double ActDist = (-d.y * (pnt.x - pnt1.x) + d.x * (pnt.y - pnt1.y)) / d.Length();
 
             openCommand(QT_TRANSLATE_NOOP("Command", "Add point to line Distance constraint"));
             Gui::cmdAppObjectArgs(selection[0].getObject(),
@@ -2248,7 +2253,7 @@ void CmdSketcherConstrainDistance::activated(int iMsg)
         if (geom->getTypeId() == Part::GeomLineSegment::getClassTypeId()) {
             const Part::GeomLineSegment *lineSeg;
             lineSeg = static_cast<const Part::GeomLineSegment*>(geom);
-            double ActLength = (lineSeg->getEndPoint()-lineSeg->getStartPoint()).Length();
+            double ActLength = (lineSeg->getEndPoint() - lineSeg->getStartPoint()).Length(); // DirectionalLength
 
             openCommand(QT_TRANSLATE_NOOP("Command", "Add length constraint"));
             Gui::cmdAppObjectArgs(selection[0].getObject(), "addConstraint(Sketcher.Constraint('Distance',%d,%f)) ",
@@ -2313,7 +2318,7 @@ void CmdSketcherConstrainDistance::applyConstraint(std::vector<SelIdPair> &selSe
 
             openCommand(QT_TRANSLATE_NOOP("Command", "Add point to point distance constraint"));
             Gui::cmdAppObjectArgs(Obj,"addConstraint(Sketcher.Constraint('Distance',%d,%d,%d,%d,%f)) ",
-                GeoId1,static_cast<int>(PosId1),GeoId2,static_cast<int>(PosId2),(pnt2-pnt1).Length());
+                GeoId1,static_cast<int>(PosId1),GeoId2,static_cast<int>(PosId2),(pnt2-pnt1).Length()); // DirectionalLength
         }
 
         if (arebothpointsorsegmentsfixed || constraintCreationMode==Reference) {
@@ -2341,7 +2346,7 @@ void CmdSketcherConstrainDistance::applyConstraint(std::vector<SelIdPair> &selSe
         if (geom->getTypeId() == Part::GeomLineSegment::getClassTypeId()) {
             const Part::GeomLineSegment *lineSeg;
             lineSeg = static_cast<const Part::GeomLineSegment*>(geom);
-            double ActLength = (lineSeg->getEndPoint()-lineSeg->getStartPoint()).Length();
+            double ActLength = (lineSeg->getEndPoint()-lineSeg->getStartPoint()).Length(); // DirectionalLength
 
             openCommand(QT_TRANSLATE_NOOP("Command", "Add length constraint"));
             Gui::cmdAppObjectArgs(Obj,"addConstraint(Sketcher.Constraint('Distance',%d,%f)) ",
@@ -2384,7 +2389,9 @@ void CmdSketcherConstrainDistance::applyConstraint(std::vector<SelIdPair> &selSe
             Base::Vector3d pnt1 = lineSeg->getStartPoint();
             Base::Vector3d pnt2 = lineSeg->getEndPoint();
             Base::Vector3d d = pnt2-pnt1;
-            double ActDist = std::abs(-pnt.x*d.y+pnt.y*d.x+pnt1.x*pnt2.y-pnt2.x*pnt1.y) / d.Length();
+            //double ActDist = std::abs(-pnt.x*d.y+pnt.y*d.x+pnt1.x*pnt2.y-pnt2.x*pnt1.y) / d.Length();
+            // signed distance without abs
+            double ActDist = (-d.y * (pnt.x - pnt1.x) + d.x * (pnt.y - pnt1.y)) / d.Length();
 
             openCommand(QT_TRANSLATE_NOOP("Command", "Add point to line Distance constraint"));
             Gui::cmdAppObjectArgs(Obj,"addConstraint(Sketcher.Constraint('Distance',%d,%d,%d,%f)) ",

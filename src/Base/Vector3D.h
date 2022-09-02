@@ -159,6 +159,8 @@ public:
     //@{
     /// Length of the vector.
     _Precision Length () const;
+    /// Directional length of the vector.
+    _Precision DirectionalLength () const;
     /// Squared length of the vector.
     _Precision Sqr () const;
     /// Set length to 1.

@@ -350,7 +350,7 @@ int SketchObject::setDatum(int ConstrId, double Datum)
         type != Perpendicular)
         return -1;
 
-    if ((type == Distance || type == Radius || type == Diameter || type == Weight) && Datum <= 0)
+    if ((/* type == Distance ||*/ type == Radius || type == Diameter || type == Weight) && Datum <= 0)
         return (Datum == 0) ? -5 : -4;
 
     // copy the list

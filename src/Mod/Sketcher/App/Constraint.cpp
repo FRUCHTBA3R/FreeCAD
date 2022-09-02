@@ -54,6 +54,7 @@ Constraint::Constraint()
   SecondPos(PointPos::none),
   Third(GeoEnum::GeoUndef),
   ThirdPos(PointPos::none),
+  Handedness(0),
   LabelDistance(10.f),
   LabelPosition(0.f),
   isDriving(true),
@@ -163,6 +164,7 @@ void Constraint::Save (Writer &writer) const
     << "SecondPos=\""                   <<  (int) SecondPos         << "\" "
     << "Third=\""                       <<  Third                   << "\" "
     << "ThirdPos=\""                    <<  (int) ThirdPos          << "\" "
+    << "Handedness=\""                  <<  Handedness              << "\" "
     << "LabelDistance=\""               <<  LabelDistance           << "\" "
     << "LabelPosition=\""               <<  LabelPosition           << "\" "
     << "IsDriving=\""                   <<  (int)isDriving          << "\" "
@@ -197,6 +199,11 @@ void Constraint::Restore(XMLReader &reader)
     if (reader.hasAttribute("Third")) {
         Third    = reader.getAttributeAsInteger("Third");
         ThirdPos = (PointPos)  reader.getAttributeAsInteger("ThirdPos");
+    }
+
+    // read handedness if present
+    if (reader.hasAttribute("Handedness")) {
+        Handedness = reader.getAttributeAsInteger("Handedness");
     }
 
     // Read the distance a constraint label has been moved

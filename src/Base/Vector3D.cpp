@@ -251,6 +251,22 @@ _Precision Vector3<_Precision>::Length () const
 }
 
 template <class _Precision>
+_Precision Vector3<_Precision>::DirectionalLength() const
+{
+    if (x > 0.0) 
+        return Length();
+    if (x == 0.0) {
+        if (y > 0.0) 
+            return Length();
+        if (y == 0.0) {
+            if (z > 0.0)
+                return Length();
+        }
+    }
+    return -Length();
+}
+
+template <class _Precision>
 _Precision Vector3<_Precision>::DistanceToLine (const Vector3<_Precision> &rclBase,
                                                 const Vector3<_Precision> &rclDirect) const
 {
